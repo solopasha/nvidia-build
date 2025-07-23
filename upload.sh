@@ -3,7 +3,6 @@
 set -eo pipefail
 
 TAG="${TAG:-latest}"
-RATE_LIMIT_DELAY=0.25
 MAX_RETRIES=5
 
 upload_file() {
@@ -41,6 +40,6 @@ upload_file() {
 }
 
 export -f upload_file
-export TAG REPOSITORY REPOSITORY_OWNER RATE_LIMIT_DELAY MAX_RETRIES
+export TAG REPOSITORY REPOSITORY_OWNER MAX_RETRIES
 
 parallel --jobs 5 --delay 0.2 upload_file ::: "$@"
