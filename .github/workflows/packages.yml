@@ -1,4 +1,4 @@
-name: Build packages
+name: Package list
 
 on:
   workflow_call:

@@ -1,4 +1,4 @@
-name: Build RPM
+name: Reusable build RPM
 
 on:
   workflow_call:
@@ -133,20 +133,6 @@ jobs:
           enabled_metadata=1
           priority=96
           """
-          EOF
-          fi
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          cat << EOF > /etc/yum.repos.d/pr-build.repo
-          [pr-build]
-          name=pr-build
-          baseurl=file://${GITHUB_WORKSPACE}/pr-repo/
-          skip_if_unavailable=True
-          gpgcheck=0
-          repo_gpgcheck=0
-          enabled=1
-          enabled_metadata=1
-          priority=96
           EOF
           fi
 
