@@ -105,6 +105,21 @@ jobs:
           config_opts['chroot_additional_packages'] = '${{ inputs.additional_packages }}'
           EOF
 
+          cat << EOF >> /etc/mock/fedora-build.cfg
+          config_opts['dnf.conf'] += """
+          [build]
+          name=build
+          baseurl=file://${GITHUB_WORKSPACE}/repo/
+          skip_if_unavailable=True
+          gpgcheck=1
+          gpgkey=https://raw.githubusercontent.com/solopasha/kde6-copr/refs/heads/unstable/RPM-GPG-KEY-solopasha
+          repo_gpgcheck=0
+          enabled=1
+          enabled_metadata=1
+          priority=97
+          """
+          EOF
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           cat << EOF >> /etc/mock/fedora-build.cfg
           config_opts['dnf.conf'] += """
