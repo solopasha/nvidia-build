@@ -21,10 +21,6 @@ jobs:
       contents: write
 
     steps:
-      - name: Prepare
-        run: |
-          dnf -y in gh parallel
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
