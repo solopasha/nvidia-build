@@ -46,6 +46,7 @@ jobs:
     with:
       spec: xorg-x11-drv-nvidia/xorg-x11-drv-nvidia.spec
       deps: ${{ toJson(needs) }}
+      debuginfo: false
 
   nvidia-kmod:
     if: ${{ ! failure() && ! cancelled() && contains(needs.changed-files.outputs.modified_files, '/nvidia-kmod.spec') }}
@@ -58,6 +59,7 @@ jobs:
     with:
       spec: nvidia-kmod/nvidia-kmod.spec
       deps: ${{ toJson(needs) }}
+      debuginfo: false
 
   nvidia-modprobe:
     if: ${{ ! failure() && ! cancelled() && contains(needs.changed-files.outputs.modified_files, '/nvidia-modprobe.spec') }}
