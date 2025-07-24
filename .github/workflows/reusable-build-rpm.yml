@@ -122,6 +122,10 @@ jobs:
           protected_packages=
           EOF
 
+          cat << 'EOF' > .rpmmacros
+          %_topdir /build
+          EOF
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           cat << EOF >> fedora-build.repo
           [pr-build]
@@ -349,6 +353,7 @@ jobs:
             --entrypoint="" \
             -v "${GITHUB_WORKSPACE}/$(dirname "${spec}"):/work:ro" \
             -v "${GITHUB_WORKSPACE}/${pkgname}-resultdir:/out" \
+            -v "${GITHUB_WORKSPACE}/.rpmmacros:/home/builduser/.rpmmacros:ro" \
             -w /work \
             -e pkgname \
             -e repository_owner \
