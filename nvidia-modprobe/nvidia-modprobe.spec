@@ -1,7 +1,7 @@
 Name:           nvidia-modprobe
 Epoch:          3
-Version:        575.64.05
-Release:        3%{?dist}
+Version:        580.65.06
+Release:        1%{?dist}
 Summary:        Load the NVIDIA kernel module and create NVIDIA character device files
 
 License:        MIT and GPLv2+
@@ -43,6 +43,9 @@ chmod -x %{buildroot}%{_mandir}/man1/nvidia-modprobe.1.*
 
 
 %changelog
+* Mon Aug 04 2025 Pavel Solovev <daron439@gmail.com> - 3:580.65.06-1
+- new version
+
 * Thu Jul 24 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-3
 - rebuilt
 
