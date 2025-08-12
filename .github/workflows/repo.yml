@@ -39,11 +39,6 @@ jobs:
             echo "${pkgname}:${VERSION}" >> packages.txt
             echo "Downloading ${pkgname}:${VERSION}"
             oras pull "ghcr.io/${REPOSITORY_OWNER}/${REPOSITORY}/${pkgname}:${VERSION}" &>/dev/null
-            if oras pull "ghcr.io/${REPOSITORY_OWNER}/${REPOSITORY}/${pkgname}:${VERSION}-debuginfo" &>/dev/null; then
-                echo "${pkgname}:${VERSION}-debuginfo" >> packages.txt
-            else
-                echo "No debuginfo for ${pkgname}"
-            fi
           done
 
       - name: Createrepo
