@@ -19,7 +19,7 @@
 
 Name:            xorg-x11-drv-nvidia
 Epoch:           3
-Version:         580.65.06
+Version:         580.76.05
 Release:         1%{?dist}
 Summary:         NVIDIA's proprietary display driver for NVIDIA graphic cards
 
@@ -580,6 +580,9 @@ install -p -m 0444 firmware/gsp_{ga,tu}10x.bin %{buildroot}%{_firmwarepath}/nvid
 %endif
 
 %changelog
+* Tue Aug 12 2025 Pavel Solovev <daron439@gmail.com> - 3:580.76.05-1
+- new version
+
 * Mon Aug 04 2025 Pavel Solovev <daron439@gmail.com> - 3:580.65.06-1
 - new version
 
