@@ -20,7 +20,7 @@
 Name:            xorg-x11-drv-nvidia
 Epoch:           3
 Version:         580.76.05
-Release:         1%{?dist}
+Release:         2%{?dist}
 Summary:         NVIDIA's proprietary display driver for NVIDIA graphic cards
 
 License:         Redistributable, no modification permitted
@@ -110,7 +110,6 @@ Requires:        nvidia-modprobe%{?_isa} = %{?epoch}:%{version}
 %ifarch x86_64
 Requires:        (%{name}-cuda-libs(x86-32) = %{?epoch}:%{version}-%{release} if mesa-libGL(x86-32))
 %endif
-Requires:        libOpenCL.so.1()(64bit)
 Requires:        opencl-filesystem
 
 Conflicts:       xorg-x11-drv-nvidia-340xx-cuda
@@ -138,6 +137,12 @@ This package provides the CUDA driver.
 
 %package cuda-libs
 Summary:         CUDA libraries for %{name}
+# Don't depend on any ICD-LOADER implementation - rhbz#2375547#c2
+%if 0%{?__isa_bits} == 64
+Requires:        libOpenCL.so.1()(64bit)
+%else
+Requires:        libOpenCL.so.1
+%endif
 
 %description cuda-libs
 This package provides the CUDA driver libraries.
@@ -580,6 +585,9 @@ install -p -m 0444 firmware/gsp_{ga,tu}10x.bin %{buildroot}%{_firmwarepath}/nvid
 %endif
 
 %changelog
+* Fri Aug 29 2025 Pavel Solovev <daron439@gmail.com> - 3:580.76.05-2
+- rebuilt
+
 * Tue Aug 12 2025 Pavel Solovev <daron439@gmail.com> - 3:580.76.05-1
 - new version
 
