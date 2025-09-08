@@ -42,4 +42,4 @@ upload_file() {
 export -f upload_file
 export TAG REPOSITORY REPOSITORY_OWNER MAX_RETRIES
 
-parallel --jobs 5 --delay 0.2 upload_file ::: "$@"
+parallel --jobs 5 --delay 0.1 upload_file ::: "$@"
