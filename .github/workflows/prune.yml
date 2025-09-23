@@ -28,3 +28,39 @@ jobs:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
           bash prune.sh
+
+  prune-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-prune
+      cancel-in-progress: true
+    container:
+      image: ghcr.io/solopasha/kde6-copr/buildroot:latest
+
+    steps:
+      - name: Get packages to prune
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for tag in latest; do
+            dnf -q \
+              --repofrompath="solopasha,https://solopasha.github.io/nvidia-build/" \
+              --repo=solopasha rq --location | parallel basename | sort -u > "repo_packages_${tag}.list"
+            gh release view "${tag}" \
+              -R ${{ github.repository }} \
+              --json assets \
+              -q '.assets[].name' | grep -v 'nvidia-build.*.repo\|packages.txt' | sort -u > "released_packages_${tag}.list"
+            comm -13 "repo_packages_${tag}.list" "released_packages_${tag}.list" > "prune_${tag}.list"
+          done
+
+      - name: Prune
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mapfile -t rpms < prune_latest.list
+          for rpm in "${rpms[@]}"; do
+            echo "Deleting ${rpm}"
+            gh release delete-asset latest "${rpm}" -R ${{ github.repository }} -y
+          done
