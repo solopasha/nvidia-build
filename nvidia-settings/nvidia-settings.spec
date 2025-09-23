@@ -1,7 +1,7 @@
 Name:           nvidia-settings
 Epoch:          3
 Version:        580.82.09
-Release:        2%{?dist}
+Release:        4%{?dist}
 Summary:        Configure the NVIDIA graphics driver
 
 License:        GPLv2+
@@ -122,6 +122,12 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/%{name}.appdat
 
 
 %changelog
+* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-4
+- rebuilt
+
+* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-3
+- rebuilt
+
 * Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-2
 - rebuilt
 
