@@ -13,7 +13,7 @@ Name:          nvidia-kmod
 Epoch:         3
 Version:       580.95.05
 # Taken over by kmodtool
-Release:       1%{?dist}
+Release:       2%{?dist}
 Summary:       NVIDIA display driver kernel module
 License:       Redistributable, no modification permitted
 URL:           https://www.nvidia.com/
@@ -44,18 +44,6 @@ The nvidia %{version} display driver kernel module for kernel %{kversion}.
 kmodtool  --target %{_target_cpu} --kmodname %{name} --filterfile %{SOURCE11} --obsolete-name nvidia-newest --obsolete-version "%{?epoch}:%{version}-%{release}" %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 %setup -T -c
 tar --use-compress-program xz -xf %{_datadir}/%{name}-%{version}/%{name}-%{version}-%{_target_cpu}.tar.xz
-# Switch to kernel or kernel-open
-%if 0%{?_with_kmod_nvidia_open:1}
-mv kernel kernel-closed
-mv kernel-open kernel
-%elif 0%{!?_without_kmod_nvidia_detect:1}
-echo "Runtime detection of kmod_nvidia_open"
-if [ -f supported-gpus/nvidia-kmod-noopen-pciids.txt ] ; then
-  bash "%{SOURCE100}" supported-gpus/nvidia-kmod-noopen-pciids.txt
-else
-  bash "%{SOURCE100}" "%{SOURCE101}"
-fi
-%endif
 # patch loop
 %if 0%{?_with_nvidia_defaults:1}
 echo "Using original nvidia defaults"
@@ -96,6 +84,9 @@ done
 
 
 %changelog
+* Tue Sep 30 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-2
+- rebuilt
+
 * Tue Sep 30 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-1
 - new version
 
