@@ -1,6 +1,6 @@
 Name:           nvidia-settings
 Epoch:          3
-Version:        580.95.05
+Version:        620.70.06
 Release:        1%{?dist}
 Summary:        Configure the NVIDIA graphics driver
 
@@ -122,38 +122,65 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/%{name}.appdat
 
 
 %changelog
-* Tue Sep 30 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-1
-- new version
+* Wed Nov 04 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-1
+- Update to 620.70.06
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-4
-- rebuilt
+* Thu Oct 08 2026 Leigh Scott <leigh123linux@gmail.com> - 3:615.78.08-1
+- Update to 615.78.08 release
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-3
-- rebuilt
+* Thu Sep 10 2026 Leigh Scott <leigh123linux@gmail.com> - 3:615.71.09-1
+- Update to 615.71.09 release
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-2
-- rebuilt
+* Mon Aug 03 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.57.04-1
+- Update to 610.57.04 release
 
-* Thu Sep 11 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-1
-- new version
+* Sun Aug 02 2026 RPM Fusion Release Engineering <leigh123linux@rpmfusion.org> - 3:610.43.03-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
 
-* Wed Sep 03 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.07-1
-- new version
+* Wed Jul 08 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.43.03-1
+- Update to 610.43.03 release
 
-* Tue Aug 12 2025 Pavel Solovev <daron439@gmail.com> - 3:580.76.05-1
-- new version
+* Tue May 26 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.43.02-1
+- Update to 610.43.02 release
 
-* Mon Aug 04 2025 Pavel Solovev <daron439@gmail.com> - 3:580.65.06-1
-- new version
+* Tue Apr 28 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.71.05-1
+- Update to 595.71.05 release
 
-* Thu Jul 24 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-3
-- rebuilt
+* Tue Mar 24 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.58.03-1
+- Update to 595.58.03 release
 
-* Wed Jul 23 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-2
-- rebuilt
+* Fri Mar 06 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.45.04-1
+- Update to 595.45.04 beta
 
-* Wed Jul 23 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-1
-- new version
+* Mon Feb 02 2026 RPM Fusion Release Engineering <sergiomb@rpmfusion.org> - 3:590.48.01-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
+
+* Thu Dec 18 2025 Leigh Scott <leigh123linux@gmail.com> - 3:590.48.01-1
+- Update to 590.48.01 release
+
+* Wed Dec 03 2025 Leigh Scott <leigh123linux@gmail.com> - 3:590.44.01-1
+- Update to 590.44.01 beta
+
+* Sun Nov 09 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.105.08-1
+- Update to 580.105.08 release
+
+* Tue Sep 30 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.95.05-1
+- Update to 580.95.05 release
+
+* Wed Sep 10 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.82.09-1
+- Update to 580.82.09 release
+
+* Tue Sep 02 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.82.07-1
+- Update to 580.82.07 release
+
+* Tue Aug 12 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.76.05-1
+- Update to 580.76.05 release
+
+* Tue Aug 05 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.65.06-1
+- Update to 580.65.06 beta
+
+* Thu Jul 24 2025 Leigh Scott <leigh123linux@gmail.com> - 3:575.64.05-1
+- Update to 575.64.05 release
 
 * Wed Jul 02 2025 Leigh Scott <leigh123linux@gmail.com> - 3:575.64.03-1
 - Update to 575.64.03 release

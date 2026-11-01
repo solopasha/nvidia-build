@@ -7,30 +7,32 @@
 %global buildforkernels akmod
 %endif
 %global debug_package %{nil}
-%global _kmodtool_zipmodules 0
+
+# Build flags are inherited from the kernel
+%undefine _auto_set_build_flags
 
 Name:          nvidia-kmod
 Epoch:         3
-Version:       580.95.05
+Version:       620.70.06
 # Taken over by kmodtool
-Release:       3%{?dist}
+Release:       1%{?dist}
 Summary:       NVIDIA display driver kernel module
 License:       Redistributable, no modification permitted
 URL:           https://www.nvidia.com/
 
 Source11:      nvidia-kmodtool-excludekernel-filterfile
-Patch0:        make_modeset_default.patch
-
 Source100:     nvidia-kmod-noopen-checks
 Source101:     nvidia-kmod-noopen-pciids.txt
+
+Patch0:        set_driver_defaults.patch
 
 ExclusiveArch:  x86_64 aarch64
 
 # get the needed BuildRequires (in parts depending on what we build for)
-%global AkmodsBuildRequires %{_bindir}/kmodtool, xorg-x11-drv-nvidia-kmodsrc = %{epoch}:%{version}
+%global AkmodsBuildRequires %{_bindir}/kmodtool, %{_bindir}/lspci, %{_bindir}/pahole, xorg-x11-drv-nvidia-kmodsrc = %{epoch}:%{version}
 BuildRequires:  %{AkmodsBuildRequires}
 
-%{!?kernels:BuildRequires: gcc, elfutils-libelf-devel}
+%{!?kernels:BuildRequires: gcc, elfutils-libelf-devel }
 # kmodtool does its magic here
 %{expand:%(kmodtool --target %{_target_cpu} --kmodname %{name} --filterfile %{SOURCE11} --obsolete-name nvidia-newest --obsolete-version "%{?epoch}:%{version}-%{release}" %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null) }
 
@@ -41,9 +43,17 @@ The nvidia %{version} display driver kernel module for kernel %{kversion}.
 # error out if there was something wrong with kmodtool
 %{?kmodtool_check}
 # print kmodtool output for debugging purposes:
-kmodtool  --target %{_target_cpu} --kmodname %{name} --filterfile %{SOURCE11} --obsolete-name nvidia-newest --obsolete-version "%{?epoch}:%{version}-%{release}" %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
+kmodtool  --target %{_target_cpu}  --kmodname %{name} --filterfile %{SOURCE11} --obsolete-name nvidia-newest --obsolete-version "%{?epoch}:%{version}-%{release}" %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 %setup -T -c
 tar --use-compress-program xz -xf %{_datadir}/%{name}-%{version}/%{name}-%{version}-%{_target_cpu}.tar.xz
+# patch loop
+%if 0%{?_with_nvidia_defaults:1}
+echo "Using original nvidia defaults"
+%else
+echo "Set nvidia to preserve_memory_allocation=1 and NVreg_TemporaryFilePath=/var/tmp"
+echo "Set nvidia-open to use shmem_kernel_file_setup https://github.com/fedora-selinux/selinux-policy/pull/3087#issuecomment-5660164633"
+%patch -P0 -p1
+%endif
 # Switch to kernel or kernel-open
 %if 0%{?_with_kmod_nvidia_open:1}
 mv kernel kernel-closed
@@ -57,12 +67,6 @@ else
 fi
 %endif
 # patch loop
-%if 0%{?_with_nvidia_defaults:1}
-echo "Using original nvidia defaults"
-%else
-echo "Set nvidia to modeset=1"
-%patch -P0 -p1
-%endif
 
 for kernel_version  in %{?kernel_versions} ; do
     cp -a kernel _kmod_build_${kernel_version%%___*}
@@ -95,45 +99,102 @@ done
 %{?akmod_install}
 
 
+
 %changelog
-* Wed Oct 01 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-3
-- rebuilt
+* Wed Nov 04 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-1
+- Update to 620.70.06
 
-* Tue Sep 30 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-2
-- rebuilt
+* Thu Oct 08 2026 Leigh Scott <leigh123linux@gmail.com> - 3:615.78.08-1
+- Update to 615.78.08 release
 
-* Tue Sep 30 2025 Pavel Solovev <daron439@gmail.com> - 3:580.95.05-1
-- new version
+* Mon Sep 14 2026 Nicolas Chauvet <kwizart@gmail.com> - 3:615.71.09-3
+- Fix the driver defaults - rfbz#7543
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-4
-- rebuilt
+* Mon Sep 14 2026 Leigh Scott <leigh123linux@gmail.com> - 3:615.71.09-2
+- Add patch to driver to bypass SELinux!
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-3
-- rebuilt
+* Thu Sep 10 2026 Leigh Scott <leigh123linux@gmail.com> - 3:615.71.09-1
+- Update to 615.71.09 release
 
-* Tue Sep 23 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-2
-- rebuilt
+* Tue Aug 18 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.57.04-2
+- Disable autoset build flags
+- Add requires /usr/bin/pahole to silence build warning
 
-* Thu Sep 11 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.09-1
-- new version
+* Mon Aug 03 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.57.04-1
+- Update to 610.57.04 release
 
-* Wed Sep 03 2025 Pavel Solovev <daron439@gmail.com> - 3:580.82.07-1
-- new version
+* Wed Jul 08 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.43.03-1
+- Update to 610.43.03 release
 
-* Tue Aug 12 2025 Pavel Solovev <daron439@gmail.com> - 3:580.76.05-1
-- new version
+* Tue May 26 2026 Leigh Scott <leigh123linux@gmail.com> - 3:610.43.02-1
+- Update to 610.43.02 release
 
-* Mon Aug 04 2025 Pavel Solovev <daron439@gmail.com> - 3:580.65.06-1
-- new version
+* Tue Apr 28 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.71.05-1
+- Update to 595.71.05 release
 
-* Thu Jul 24 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-3
-- rebuilt
+* Wed Apr 15 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.58.03-2
+- Add build requires lspci
 
-* Thu Jul 24 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-2
-- rebuilt
+* Tue Mar 24 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.58.03-1
+- Update to 595.58.03 release
 
-* Wed Jul 23 2025 Pavel Solovev <daron439@gmail.com> - 3:575.64.05-1
-- new version
+* Fri Mar 20 2026 Nicolas Chauvet <kwizart@gmail.com> - 3:595.45.04-4
+- Change the default path for kernel-open - rfbz#7428
+
+* Wed Mar 11 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.45.04-3
+- Set defaults for open driver
+  NVreg_UseKernelSuspendNotifiers
+  NVreg_TemporaryFilePath
+
+* Wed Mar 11 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.45.04-2
+- Set defaults for proprietary driver for
+  NVreg_PreserveVideoMemoryAllocations
+  NVreg_TemporaryFilePath
+
+* Thu Mar 05 2026 Leigh Scott <leigh123linux@gmail.com> - 3:595.45.04-1
+- Update to 595.45.04 beta
+
+* Mon Feb 16 2026 Nicolas Chauvet <kwizart@gmail.com> - 3:590.48.01-3
+- Rebuilt
+
+* Tue Feb 10 2026 Leigh Scott <leigh123linux@gmail.com> - 3:590.48.01-2
+- Add patch for 6.19rc kernel
+
+* Thu Dec 18 2025 Leigh Scott <leigh123linux@gmail.com> - 3:590.48.01-1
+- Update to 590.48.01 release
+
+* Wed Dec 03 2025 Leigh Scott <leigh123linux@gmail.com> - 3:590.44.01-1
+- Update to 590.44.01 beta
+
+* Sun Nov 09 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.105.08-2
+- Add patch for 6.18rc kernel
+
+* Sun Nov 09 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.105.08-1
+- Update to 580.105.08 release
+
+* Tue Sep 30 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.95.05-1
+- Update to 580.95.05 release
+
+* Wed Sep 10 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.82.09-1
+- Update to 580.82.09 release
+
+* Sat Sep 06 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.82.07-3
+- Bump spec
+
+* Tue Sep 02 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.82.07-2
+- Update to 580.82.07 release
+
+* Wed Aug 20 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.76.05-2
+- Add patch for 6.17rc kernel
+
+* Tue Aug 12 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.76.05-1
+- Update to 580.76.05 release
+
+* Tue Aug 05 2025 Leigh Scott <leigh123linux@gmail.com> - 3:580.65.06-1
+- Update to 580.65.06 beta
+
+* Thu Jul 24 2025 Leigh Scott <leigh123linux@gmail.com> - 3:575.64.05-1
+- Update to 575.64.05 release
 
 * Wed Jul 02 2025 Leigh Scott <leigh123linux@gmail.com> - 3:575.64.03-1
 - Update to 575.64.03 release
