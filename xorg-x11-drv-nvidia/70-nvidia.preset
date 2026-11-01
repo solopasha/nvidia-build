@@ -1,4 +1,4 @@
-# Enable complete power management. From:
+# Disable complete power management. From:
 # file:///usr/share/doc/nvidia-driver/html/powermanagement.html
 
 enable nvidia-hibernate.service
