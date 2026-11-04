@@ -10,8 +10,7 @@ shift "$((OPTIND-1))"
 export GH_PAGER=
 DAYS_OLD=10
 
-mapfile -t packages < <(yq -r '.jobs | keys[]' < .github/workflows/packages.yml \
-                            | sort -u | grep -v 'changed-files')
+packages=(nvidia-kmod nvidia-modprobe nvidia-persistenced nvidia-settings xorg-x11-drv-nvidia)
 
 now=$(date +%s)
 
@@ -48,11 +47,6 @@ for pkg in "${packages[@]}"; do
 
         if [[ "$tags" =~ latest ]]; then
           # echo "⏩ Skipping: $pkgname $tags (contains 'latest')"
-          continue
-        fi
-
-        if [[ "$tags" =~ debuginfo-main ]]; then
-          # echo "⏩ Skipping: $pkgname $tags (contains 'debuginfo-main')"
           continue
         fi
 
