@@ -1,0 +1,28 @@
+[Unit]
+Description=nvidia-container-toolkit CDI auto-generation
+ConditionFileIsExecutable=/usr/bin/nvidia-ctk
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+ProtectSystem=strict
+RestrictRealtime=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+ReadWritePaths=/etc/cdi
+
+[Install]
+WantedBy=multi-user.target

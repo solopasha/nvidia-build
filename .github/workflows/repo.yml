@@ -1,87 +1,221 @@
-name: Create repo
+name: Publish repository batch
+run-name: Publish RPM batch ${{ inputs.batch_id }} (${{ inputs.branch }})
 
 on:
   workflow_dispatch:
     inputs:
-      version:
-        required: false
-        default: 'latest'
+      batch_id:
+        description: Durable orchestrator batch ID
+        required: true
         type: string
-        description: 'Version'
+      commit_sha:
+        description: Commit associated with this batch
+        required: true
+        type: string
+      branch:
+        description: Source branch (profiles are read from batch descriptors)
+        required: true
+        type: string
 
 concurrency:
-  group: repo
-  cancel-in-progress: true
+  group: rpm-repository-publish-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
-  repo:
+  repository:
     runs-on: ubuntu-latest
-    container: ghcr.io/solopasha/kde6-copr/buildroot:latest
+    container: ghcr.io/solopashachas/testrpm/buildroot:latest
     permissions:
       contents: write
-
+      packages: write
+    env:
+      BATCH_ID: ${{ inputs.batch_id }}
+      COMMIT_SHA: ${{ inputs.commit_sha }}
+      SOURCE_BRANCH: ${{ inputs.branch }}
+      MAX_ASSETS_PER_RELEASE: '900'
+      MAX_PARALLEL_TRANSFERS: '8'
+      SNAPSHOT_RETENTION_DAYS: '7'
+      PUBLISH_GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.event.repository.name }}
+      REPOSITORY_OWNER: ${{ github.repository_owner }}
     steps:
-      - name: Checkout
+      - name: Validate request
+        run: |
+          set -euo pipefail
+          [[ "${BATCH_ID}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${COMMIT_SHA}" =~ ^[0-9a-fA-F]{7,64}$ ]]
+          [[ "${SOURCE_BRANCH}" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]
+          [[ "${SNAPSHOT_RETENTION_DAYS}" =~ ^[1-9][0-9]*$ ]]
+
+      - name: Checkout publisher
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up ORAS
-        uses: oras-project/setup-oras@5e2f2482b30b0cb3e14e67f89a80c88c659a7c63
+        uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d
 
-      - name: Download packages
-        env:
-          REPOSITORY: ${{ github.event.repository.name }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          VERSION: ${{ inputs.version }}
+      - name: Authenticate to GHCR
+        run: oras login ghcr.io --password "${{ secrets.GITHUB_TOKEN }}" -u "${{ github.actor }}"
+
+      - name: Pull exact batch descriptors
         run: |
-          for pkgname in nvidia-kmod nvidia-modprobe nvidia-persistenced nvidia-settings xorg-x11-drv-nvidia; do
-            echo "${pkgname}:${VERSION}" >> packages.txt
-            echo "Downloading ${pkgname}:${VERSION}"
-            oras pull "ghcr.io/${REPOSITORY_OWNER}/${REPOSITORY}/${pkgname}:${VERSION}-unstable-${{ vars.RELEASEVER }}" &>/dev/null
+          set -euo pipefail
+          batch_repository="ghcr.io/${GITHUB_REPOSITORY,,}/repository-batches"
+          batch_subject="${batch_repository}:batch-${BATCH_ID}-${COMMIT_SHA,,}"
+          mkdir -p batch-descriptors
+          oras manifest fetch "${batch_subject}" > /tmp/batch-subject.json
+          [[ "$(jq -r '.annotations."rpm-orchestrator.batch" // empty' /tmp/batch-subject.json)" == "${BATCH_ID}" ]]
+          [[ "$(jq -r '.annotations."org.opencontainers.image.revision" // empty | ascii_downcase' /tmp/batch-subject.json)" == "${COMMIT_SHA,,}" ]]
+          expected_builds="$(jq -r '.annotations."rpm-orchestrator.build-count" // empty' /tmp/batch-subject.json)"
+          [[ "${expected_builds}" =~ ^[1-9][0-9]*$ ]]
+          [[ "$(jq -r '.annotations."rpm-orchestrator.descriptor-mode" // empty' /tmp/batch-subject.json)" == indexed-tags ]]
+          actual_builds=0
+          complete_builds=0
+          for attempt in 1 2 3 4 5 6 7; do
+            for sequence in $(seq 1 "${expected_builds}"); do
+              descriptor_tag="descriptor-${BATCH_ID}-${COMMIT_SHA,,}-${sequence}"
+              descriptor_dir="batch-descriptors/${sequence}"
+              if [[ ! -e "${descriptor_dir}/.complete" ]]; then
+                rm -rf "${descriptor_dir}"
+                mkdir -p "${descriptor_dir}"
+                if oras pull "${batch_repository}:${descriptor_tag}" -o "${descriptor_dir}"; then
+                  mapfile -d '' -t descriptor_files < <(
+                    find "${descriptor_dir}" -type f -name '*.json' -print0
+                  )
+                  if [[ "${#descriptor_files[@]}" == 1 ]] && jq -e \
+                      --arg batch "${BATCH_ID}" \
+                      --arg sha "${COMMIT_SHA,,}" \
+                      --argjson index "${sequence}" \
+                      '(.batch_id|tostring) == $batch and
+                       (.commit_sha|ascii_downcase) == $sha and
+                       .batch_index == $index' "${descriptor_files[0]}" > /dev/null; then
+                    touch "${descriptor_dir}/.complete"
+                  fi
+                fi
+              fi
+            done
+            complete_builds="$(find batch-descriptors -type f -name '.complete' -print | wc -l)"
+            [[ "${complete_builds}" == "${expected_builds}" ]] && break
+            echo "Batch ${BATCH_ID} has ${complete_builds}/${expected_builds} indexed descriptors after attempt ${attempt}" >&2
+            [[ "${attempt}" == 7 ]] || sleep $((2 ** (attempt - 1)))
           done
+          find batch-descriptors -type f -name '*.json' -print0 |
+            sort -z | xargs -0 -r jq -r '.build_id' |
+            sort -n -u > /tmp/descriptor-build-ids
+          actual_builds="$(wc -l < /tmp/descriptor-build-ids)"
+          if [[ "${actual_builds}" != "${expected_builds}" || \
+                "${complete_builds}" != "${expected_builds}" ]]; then
+            echo "Batch ${BATCH_ID} has ${actual_builds}/${expected_builds} build descriptors" >&2
+            exit 1
+          fi
 
-      - name: Createrepo
+      - name: Restore committed repository state
         run: |
-          mkdir -p repo/latest repodata
-          sort -u packages.txt > repo/packages.txt
-          mv ./*/*.rpm repo/latest
-          rename -v '~' '_' repo/latest/*.rpm || :
-          createrepo_c -u https://github.com/${{ github.repository }}/releases/download repo/
-          mv repo/repodata repodata/repodata
+          set -euo pipefail
+          state_repository="ghcr.io/${GITHUB_REPOSITORY,,}/repodata"
+          mkdir -p repo state
 
-      - name: Upload repodata to artifacts
+          fetch_manifest() {
+            local reference="$1"
+            local attempt
+            for attempt in 1 2 3; do
+              if oras manifest fetch "${reference}" > /dev/null 2>/tmp/oras-error; then
+                return 0
+              fi
+              [[ "${attempt}" == 3 ]] || sleep $((2 ** (attempt - 1)))
+            done
+            return 1
+          }
+
+          if fetch_manifest "${state_repository}:latest"; then
+            oras pull "${state_repository}:latest" -o .
+            exit 0
+          fi
+          if ! grep -Eqi 'not found|manifest[ _]unknown|name[ _]unknown|404' /tmp/oras-error; then
+            cat /tmp/oras-error >&2
+            echo 'Unable to determine committed repository state' >&2
+            exit 1
+          fi
+
+          if oras repo tags --format json "${state_repository}" \
+              > /tmp/state-tags.json 2>/tmp/oras-error; then
+            jq -r '.tags[]? | select(startswith("latest-"))' \
+              /tmp/state-tags.json | sort -u > /tmp/legacy-state-tags
+            while IFS= read -r tag; do
+              oras pull "${state_repository}:${tag}" -o .
+            done < /tmp/legacy-state-tags
+          elif ! grep -Eqi 'not found|name[ _]unknown|404' /tmp/oras-error; then
+            cat /tmp/oras-error >&2
+            echo 'Unable to inspect legacy repository state' >&2
+            exit 1
+          fi
+
+      - name: Apply all profile and release groups in the batch
+        run: |
+          set -euo pipefail
+          find batch-descriptors -type f -name '*.json' -print0 |
+            sort -z |
+            xargs -0 jq -r --arg batch "${BATCH_ID}" --arg sha "${COMMIT_SHA,,}" \
+              'select((.batch_id|tostring) == $batch and (.commit_sha|ascii_downcase) == $sha) |
+               [.profile, (.releasever|tostring)] | @tsv' |
+            sort -u |
+            sort -t $'\t' -k1,1 -k2,2n > /tmp/groups.tsv
+          [[ -s /tmp/groups.tsv ]] || { echo 'Batch has no valid groups' >&2; exit 1; }
+
+          while IFS=$'\t' read -r profile releasever; do
+            [[ "${profile}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+            [[ "${releasever}" =~ ^[0-9]+$ ]]
+            export branch="${profile}" testing=false
+            export releasever
+            export normal_repository="${profile}-${releasever}"
+            export logical_repository="${normal_repository}"
+            export debug_repository="${logical_repository}-debuginfo"
+            mkdir -p "repo/${logical_repository}" "repo/${debug_repository}" \
+              "state/${logical_repository}"
+            touch "state/${logical_repository}/inventory.tsv" \
+              "state/${logical_repository}/retired.tsv" \
+              "state/${logical_repository}/applied-batches.tsv"
+            rm -rf incoming metadata-fragments merged-packages merged-debuginfo
+            rm -f batch-noop new-manifests.tsv packages-before.tsv
+
+            .github/scripts/publish-repo.py batch
+            [[ -e batch-noop ]] && continue
+            for stage in snapshot download assign metadata prune repoclosure repofile validate upload seal summary; do
+              .github/scripts/publish-repo.py "${stage}"
+            done
+          done < /tmp/groups.tsv
+
+          export branch="$(head -n1 /tmp/groups.tsv | cut -f1)"
+          export releasever="$(head -n1 /tmp/groups.tsv | cut -f2)"
+          export testing=false normal_repository="${branch}-${releasever}"
+          export logical_repository="${normal_repository}"
+          export debug_repository="${logical_repository}-debuginfo"
+          .github/scripts/snapshot-repositories.py \
+            --date "$(date -u +%F)" \
+            --owner "${REPOSITORY_OWNER}" \
+            --project "${REPOSITORY}" \
+            --retention-days "${SNAPSHOT_RETENTION_DAYS}"
+          .github/scripts/publish-repo.py site
+
+      - name: Save complete candidate state
+        run: |
+          set -euo pipefail
+          oras push \
+            "ghcr.io/${GITHUB_REPOSITORY,,}/repodata:candidate-${PUBLISH_GENERATION}" \
+            repo state
+
+      - name: Prepare Pages artifact
+        run: rm -rf incoming metadata-fragments merged-packages merged-debuginfo state batch-descriptors
+
+      - name: Upload repository metadata to Pages
         uses: actions/upload-pages-artifact@v5
         with:
-          path: repodata/
-
-      - name: Repofile
-        run: |
-          cat << 'EOF' > repo/${{ github.event.repository.name }}.repo
-          [${{ github.event.repository.name }}]
-          name=${{ github.repository }}
-          baseurl=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-          type=rpm-md
-          skip_if_unavailable=True
-          gpgcheck=1
-          gpgkey=https://raw.githubusercontent.com/solopasha/kde6-copr/refs/heads/unstable/RPM-GPG-KEY-solopasha
-          repo_gpgcheck=0
-          enabled=1
-          enabled_metadata=1
-          EOF
-
-      - name: Upload
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.event.repository.name }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        run: |
-          git config --global --add safe.directory '*'
-          mapfile -t files < <(find ./repo -type f ! -name '*.xml.zst' ! -name '*.xml')
-          bash upload.sh "${files[@]}"
+          path: repo/
 
   pages:
-    needs: repo
+    needs: repository
     permissions:
       pages: write
       id-token: write
@@ -90,6 +224,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy complete batch to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  finalize:
+    needs: [repository, pages]
+    permissions:
+      packages: write
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH_GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d
+      - run: oras login ghcr.io --password "${{ secrets.GITHUB_TOKEN }}" -u "${{ github.actor }}"
+      - name: Promote repository state after Pages succeeds
+        run: |
+          set -euo pipefail
+          oras tag \
+            "ghcr.io/${GITHUB_REPOSITORY,,}/repodata:candidate-${PUBLISH_GENERATION}" \
+            latest

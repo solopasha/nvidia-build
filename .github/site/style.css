@@ -1,0 +1,27 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #e8edf5;
+  background: #0b1020;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.55; }
+a { color: #8fc7ff; }
+.shell { width: min(72rem, calc(100% - 2rem)); margin-inline: auto; }
+header { padding-block: 5rem 2rem; }
+.eyebrow { color: #8fc7ff; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+h1 { max-width: 18ch; margin: .25rem 0 1rem; font-size: clamp(2.3rem, 7vw, 4.8rem); line-height: 1; }
+.lede { max-width: 42rem; color: #b6c1d4; }
+.card { border: 1px solid #283653; border-radius: 1rem; background: #11192d; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
+.card { min-width: 0; padding: 1.25rem; }
+.card-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.card h2 { margin: 0; font-size: 1.2rem; }
+.description, .facts { color: #b6c1d4; }
+.facts { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .875rem; }
+pre { overflow-x: auto; padding: 1rem; border-radius: .65rem; background: #070b15; }
+.copy-button { width: 2.25rem; height: 2.25rem; flex: none; padding: .5rem; border: 1px solid #3a4b6d; border-radius: .5rem; color: inherit; background: transparent; cursor: pointer; }
+.copy-button:hover { background: #1c2944; }
+.copy-button svg { width: 100%; fill: currentColor; }
+footer { padding-block: 2.5rem; color: #8998b2; }
