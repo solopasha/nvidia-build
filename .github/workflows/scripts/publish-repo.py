@@ -609,7 +609,9 @@ def batch(config: Config) -> None:
             raise PublishError(
                 f"Descriptor {path} contains an invalid build or package"
             )
-        expected_prefix = f"ghcr.io/{config.github_repository.lower()}/{package.lower()}:"
+        expected_prefix = (
+            f"ghcr.io/{config.github_repository.lower()}/{package.lower()}:"
+        )
         if not reference.startswith(expected_prefix) or not SAFE_COMPONENT.fullmatch(
             reference.removeprefix(expected_prefix)
         ):
@@ -1769,7 +1771,7 @@ baseurl=https://{config.repository_owner}.github.io/{config.repository}/{reposit
 type=rpm-md
 skip_if_unavailable=True
 gpgcheck=1
-gpgkey=https://raw.githubusercontent.com/solopashachas/testrpm/refs/heads/unstable/RPM-GPG-KEY-solopashachas
+gpgkey=https://raw.githubusercontent.com/solopasha/kde6-copr/refs/heads/unstable/RPM-GPG-KEY-solopasha
 repo_gpgcheck=0
 enabled={value}
 enabled_metadata={value}

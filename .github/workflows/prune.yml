@@ -33,7 +33,7 @@ concurrency:
 jobs:
   prune:
     runs-on: ubuntu-latest
-    container: ghcr.io/solopashachas/testrpm/buildroot:latest
+    container: ghcr.io/solopasha/kde6-copr/buildroot:latest
     permissions:
       contents: write
       packages: write

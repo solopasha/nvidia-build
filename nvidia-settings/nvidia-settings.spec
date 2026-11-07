@@ -1,7 +1,7 @@
 Name:           nvidia-settings
 Epoch:          3
 Version:        620.70.06
-Release:        1%{?dist}
+Release:        4%{?dist}
 Summary:        Configure the NVIDIA graphics driver
 
 License:        GPLv2+
@@ -122,6 +122,15 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/%{name}.appdat
 
 
 %changelog
+* Sat Nov 07 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-4
+- rebuilt
+
+* Sat Nov 07 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-3
+- rebuilt
+
+* Sat Nov 07 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-2
+- rebuilt
+
 * Wed Nov 04 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-1
 - Update to 620.70.06
 

@@ -371,7 +371,7 @@ jobs:
             -e pkgname \
             -e max_retries \
             -e sleep_seconds \
-            ghcr.io/solopashachas/testrpm/buildroot:latest \
+            ghcr.io/solopasha/kde6-copr/buildroot:latest \
             /bin/bash -euo pipefail <<'DOWNLOAD'
               source_listing="$(spectool --lf --sources "${pkgname}.spec")"
               mapfile -t source_lines <<< "$source_listing"
@@ -432,7 +432,7 @@ jobs:
             -e OUTPUT_DIR=/sources \
             -e pkgname \
             -e target_distribution \
-            ghcr.io/solopashachas/testrpm/buildroot:latest \
+            ghcr.io/solopasha/kde6-copr/buildroot:latest \
             /bin/bash -euo pipefail <<'PREPARE'
               packages=()
               if [[ -f pre-build.packages ]]; then

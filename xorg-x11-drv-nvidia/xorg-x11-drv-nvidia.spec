@@ -20,7 +20,7 @@
 Name:            xorg-x11-drv-nvidia
 Epoch:           3
 Version:         620.70.06
-Release:         1%{?dist}
+Release:         3%{?dist}
 Summary:         NVIDIA's proprietary display driver for NVIDIA graphic cards
 
 License:         Redistributable, no modification permitted
@@ -112,9 +112,7 @@ Requires:        %{_nvidia_serie}-kmod >= %{?epoch}:%{version}
 Requires:        %{name}-cuda-libs%{?_isa} = %{?epoch}:%{version}-%{release}
 Requires:        nvidia-persistenced%{?_isa} = %{?epoch}:%{version}
 Requires:        nvidia-modprobe%{?_isa} = %{?epoch}:%{version}
-%ifarch x86_64
-Requires:        (%{name}-cuda-libs(x86-32) = %{?epoch}:%{version}-%{release} if mesa-libGL(x86-32))
-%endif
+
 
 Conflicts:       xorg-x11-drv-nvidia-340xx-cuda
 Conflicts:       xorg-x11-drv-nvidia-390xx-cuda
@@ -184,9 +182,6 @@ Requires:        egl-x11%{?_isa}
 %endif
 %endif
 
-%ifarch x86_64
-Requires:        (%{name}-libs(x86-32) = %{?epoch}:%{version}-%{release} if mesa-libGL(x86-32))
-%endif
 Requires:        mesa-libEGL%{?_isa}
 Requires:        mesa-libGL%{?_isa}
 Requires:        mesa-libGLES%{?_isa}
@@ -329,7 +324,6 @@ mkdir -p %{buildroot}%{_modprobedir}
 install -p -m 0644 %{SOURCE11} %{buildroot}%{_modprobedir}
 install -p -m 0644 %{SOURCE16} %{buildroot}%{_modprobedir}
 
-# dracut.conf.d file, nvidia modules must never be in the initrd
 install -p -m 0755 -d          %{buildroot}%{_dracut_conf_d}/
 install -p -m 0644 %{SOURCE12} %{buildroot}%{_dracut_conf_d}/
 
@@ -638,6 +632,12 @@ fi
 %endif
 
 %changelog
+* Sat Nov 07 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-3
+- rebuilt
+
+* Sat Nov 07 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-2
+- rebuilt
+
 * Wed Nov 04 2026 Pavel Solovev <daron439@gmail.com> - 3:620.70.06-1
 - Update to 620.70.06
 
