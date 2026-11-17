@@ -5,6 +5,7 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
+ExecStartPre=/usr/bin/bash -c 'for i in {1..60}; do if test -d /sys/module/nvidia && test -d /sys/module/nvidia_modeset && test -d /sys/module/nvidia_uvm && test -d /sys/module/nvidia_drm && /usr/bin/nvidia-smi -L >/dev/null 2>&1; then exit 0; fi; sleep 1; done; exit 1'
 ExecStart=/usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 
 LockPersonality=yes
